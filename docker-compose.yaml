@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgresql
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: 1000:988
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=${PGDATA}
+      - TZ=${TZ}
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=1000"
+      - "-c"
+      - "shared_buffers=4GB"
+      - "-c"
+      - "effective_cache_size=12GB"
+      - "-c"
+      - "maintenance_work_mem=1GB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=6553kB"
+      - "-c"
+      - "min_wal_size=1GB"
+      - "-c"
+      - "max_wal_size=4GB"
+      - "-c"
+      - "log_destination=jsonlog"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d default"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - postgres_network
+
+volumes:
+  postgres_data:
+    name: postgres_data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${POSTGRES_DATA_PATH}
+
+networks:
+  postgres_network:
+    name: postgres_network
+    driver: bridge
